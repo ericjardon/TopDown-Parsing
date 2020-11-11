@@ -15,7 +15,7 @@ def readGrammar(filename):
     rules = {}
     for i in range(3, file_length):
         line = data[i].rstrip()
-        print(line)
+        #print(line)
         args = line.split("->")
         if args[0] in rules:
             rules[args[0]].append(args[1])
@@ -24,10 +24,10 @@ def readGrammar(filename):
 
     return Grammar(nonterminal, terminal, S, rules)
 
-myG = readGrammar("test1.txt")
-print(myG.rules.keys())
-for c in "AbB":
-    if c in myG.rules:
-        print("variable: ", c)
+#myG = readGrammar("test1.txt")
+#print(myG.rules.keys())
+#for c in "AbB":
+ #   if c in myG.rules:
+  #      print("variable: ", c)
 
 
