@@ -1,5 +1,6 @@
 from TopdownParser import Parser, Node
 from readfile import readGrammar
+from TreePrinter import TreePrinter
 
 def main():
     user = 1
@@ -23,6 +24,8 @@ def main():
 
         if (user == 2):
             print(tree)
+            print('=====================')
+            TreePrinter().printTree(tree)
 
 
     print("Bye!")

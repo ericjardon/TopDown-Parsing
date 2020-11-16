@@ -1,4 +1,4 @@
-"""Do we really need a tree? search is deterministic i.e. a single path only"""
+"""Parsing tree's search is deterministic i.e. a single path only"""
 from collections import deque
 
 class Node:
@@ -29,8 +29,8 @@ class Node:
     @property
     def depth(self):
         return self._depth
-    # getter method using python Properties , we can call node.children
 
+    # str method to print trees (debugging purposes)
     def __str__(self, level=0):
         tree =  "\t"*level + repr(self.name) + "\n"
         for child in self.children:
@@ -38,67 +38,71 @@ class Node:
         return tree
 
 class Parser:
-
-    # Traverses an implicit tree to determine if the given word can be derived.
+    # Traverses an implicit derivations tree to determine if the given word can be derived.
     def topdown_parse(self, Grammar, word, max):
-        root = Node(Grammar.S, None, )
-        que = deque()       # uses append() and popeft()
+        root = Node(Grammar.S, None)
+        que = deque()       # deque uses append() and popleft()
         que.append(root)
         found = False
-        currentLevel = 0
         while (len(que)>0 and not found and root.depth <= max):
-            # Per-node iteration
-            q = que.popleft()   #   q is the node to analyze: 'uAv' where A is leftmost variable
-            #print("Current node: ", q.name)
+            # Iteration basis is per-node from the queue
+            q = que.popleft()   #   q is the node to analyze
             done = False
+            #print("Current node: ", q.name)
+
+            # Decompose q into 'uAv' where A is leftmost non terminal symbol
             leftmost = None
             for i in range(len(q.name)):
-                if q.name[i] in Grammar.rules:
+                if q.name[i] in Grammar.rules:      # if the symbol is a Head in the Grammar's rules (non-terminal)
                     leftmost = q.name[i]
-                    pos = i
+                    pos = i     # the position of A in uAv
                     break
             #print("Leftmost variable:", leftmost)
 
             if leftmost == None:
-                done = True
+                done = True     # which means we reached a leaf, so we skip to next iteration
 
-            i = 0  # index of production rule
+            i = 0  # index of production rule of A
             while (not done and not found):
-                # Per production rule of leftmost
+                # Per production rule of leftmost A
                 if i >= len(Grammar.rules[leftmost]):
-                    done = True
+                    done = True     # Finished exploring all production rules of A
                 else:
                     #print("Rule", leftmost," ->", Grammar.rules[leftmost][i])
                     j = i+1
-                    u = q.name[:pos]
+                    u = q.name[:pos]    # The substring to the left of A (prefix)
                     #print("u =", u)
-                    w = Grammar.rules[leftmost][i]
+                    w = Grammar.rules[leftmost][i]      # The production body
                     #print("w =", w)
-                    v = q.name[pos+1:]
+                    v = q.name[pos+1:]      # the substring to the right of A
                     #print("v =", v)
                     uwv = u + w + v
                     #print("uwv: ", uwv)
-                    afterU = w + v
-                    # Checa que uwv no tenga más no-terminales Y uwv sea un prefijo de word (p)
+                    wv = w + v          # The suffix wv
+
                     hasNonTerminal = False
-                    nextpos = len(u) -1     # next non terminal symbol position
-                    for i in range(len(afterU)):
-                        if afterU[i] in Grammar.rules:
-                            #print("found next variable: ", afterU[i])
+                    #nextpos = len(u) -1     # index to find next nonTerminal symbol in wv
+                    nextpos = pos
+
+                    # after producing uvw check if terminal prefix matches a prefix in word, otherwise stop exploring
+                    for i in range(pos, len(uwv)):      # for each character after the prefix u
+                        if uwv[i] in Grammar.rules:
+                            #print("found next variable: ", uwv[i])
                             hasNonTerminal = True
-                            nextpos += i + 1
+                            nextpos = i
                             break
 
                     #print("terminal prefix:", uwv[:nextpos])
-                    if hasNonTerminal and uwv[:nextpos] == word[:nextpos]:     # si no tiene no-terminales y es un prefijo,
+                    if hasNonTerminal and uwv[:nextpos] == word[:nextpos]:
+                        # si no tiene no-terminales y es un prefijo, es un nodo válido para el árbol
                         #print("uwv has non terminal and is valid prefix. enqueuing uwv: ", uwv)
                         node = Node(uwv, q)
                         que.append(node)        # append to tree & updates depth of the tree
                         q.addChild(node)        # enqueue the node to continue BFS
 
                     if uwv == word:
-                        print("Word was found")
-                        q.addChild(Node(word, q))      # append to tree & updates depth of the tree
+                        print(word, "was found")
+                        q.addChild(Node(word, q))      # appends to tree while updating depth of the tree
                         found = True
                     i = j
 
