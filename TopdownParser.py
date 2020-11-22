@@ -7,27 +7,27 @@ from collections import deque
 
 class Node:
     def __init__(self, name, parent):
-        # Leading underscore denotes internal use variables in OOP Python
         self._name=name
         self._children = []
         self._height = 0
         self._parent = parent
+        # Leading underscore denotes internal use variables in OOP Python
 
     def updateDepth(self, childDepth):
-        """Depth of tree is our parameter to stop parsing.
-        Height of root is equal to depth of deepest node.
-        To know when to stop parsing, we check the height of the root.
-        This method updates a tree's depth by updating heights recursively from last added node towards the root.
-          childDepth is the height value of the previously updated node in tree"""
+        """This method updates a tree's depth by updating heights recursively from last added node up to the root.
+          childDepth is the height of the previously updated node in tree"""
         self._height = max(self._height, childDepth + 1)
         # If the node has a parent, update its height too
         if self._parent != None:
             self._parent.updateDepth(self._height)
+        # Depth of a tree is our parameter to stop parsing.
+        # Height of a root is equal to depth of deepest node.
+        # To know when to stop parsing, the Parser checks the height of the root.
 
     # Method to add a child to this node while also updating the depth of the tree
     def addChild(self, node):
         """node is another instance of Node that is attached as child to this Node.
-            We append the child to children list of node and update the depth of tree."""
+            We append the child to children list of the node and update the depth of tree."""
         self._children.append(node)
         self.updateDepth(node.depth)
 
@@ -52,68 +52,62 @@ class Node:
 
 
 class Parser:
+    # Method that traverses an implicit derivations tree to determine if the given word can be derived.
     def topdown_parse(self, Grammar, word, max):
-        """Traverses an implicit derivations tree to determine if the given word can be derived.
-            Grammar is an instance of Grammar class
+        """Grammar is an instance of Grammar class
             word is the string to derive from the grammar
             max is the maximum number of levels in the tree
-            Returns a boolean found and the root of the generated tree."""
+            Returns a boolean whether the word was found and the root of the generated tree."""
 
+        # Make S the root of our tree. Initialize a queue and enqueue the root.
         root = Node(Grammar.S, None)
         que = deque()
-        que.append(root)        # initialize a queue and enqueue the root
-        found = False
-        while (len(que)>0 and not found and root.depth <= max):
-            # Iterations are per-node q popped from the queue
-            q = que.popleft()   # q is the node to analyze
-            done = False
-            # print("Current node: ", q.name)
+        que.append(root)
 
-            # Decompose q into 'uAv' where A is leftmost non terminal symbol
+        found = False
+
+        while (len(que)>0 and not found and root.depth <= max):
+            # Per-node iterations, q popped from the queue
+            q = que.popleft()
+            done = False
+
+            # Decompose q into 'uAv' where A is leftmost non-terminal symbol
             leftmost = None
             for i in range(len(q.name)):
                 if q.name[i] in Grammar.rules:      # if the symbol is a Head in the Grammar's rules (non-terminal)
                     leftmost = q.name[i]
-                    pos = i     # the position of A in uAv
+                    pos = i         # the position of A in uAv
                     break
 
             if leftmost == None:
-                done = True     # No A means we reached a leaf; skip to next iteration
+                done = True     # If no leftmost it means we reached a leaf; skip to next iteration
 
-            i = 0  # index of current production of head A
+            i = 0  # initialize index for current production of Head A
 
-            while (not done and not found):
-                # Per production rule of leftmost A
+            while not done and not found:
+                # Iterations per-production rule of A
                 if i >= len(Grammar.rules[leftmost]):
                     done = True     # Finished exploring all production rules of A
                 else:
                     j = i+1
                     u = q.name[:pos]    # The substring to the left of A (prefix)
-                    #print("u =", u)
                     w = Grammar.rules[leftmost][i]      # The production body
-                    #print("w =", w)
                     v = q.name[pos+1:]      # the substring to the right of A
-                    #print("v =", v)
                     uwv = u + w + v
-                    #print("uwv: ", uwv)
 
                     hasNonTerminal = False
                     nextpos = pos
 
-                    # after producing uvw check if terminal prefix matches a prefix in word, otherwise stop exploring
-                    for i in range(pos, len(uwv)):      # for each character after the prefix u
+                    for i in range(pos, len(uwv)):      # for-loop to find next non-terminal symbol
                         if uwv[i] in Grammar.rules:
-                            #print("found next variable: ", uwv[i])
                             hasNonTerminal = True
                             nextpos = i
                             break
 
-                    #print("terminal prefix:", uwv[:nextpos])
                     if hasNonTerminal and uwv[:nextpos] == word[:nextpos]:
-                        # si se compone solo de terminales y es un prefijo, es un nodo válido para el árbol
-                        #print("uwv has non terminal and is valid prefix. enqueuing uwv: ", uwv)
+                        # If uwv has a non-terminal and the terminal prefix matches a prefix in word, it is a valid node
                         node = Node(uwv, q)
-                        que.append(node)        # append to tree & updates depth of the tree
+                        que.append(node)        # append to tree & update depth of the tree
                         q.addChild(node)        # enqueue the node to continue BFS
 
                     if uwv == word:

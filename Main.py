@@ -1,3 +1,6 @@
+"""Driver program that asks input from the user. User can choose the name of the file of the Grammar,
+    Enter the word to parse, print the derivations tree if desired, and exit the program."""
+
 from TopdownParser import Parser, Node
 from readfile import readGrammar
 from TreePrinter import TreePrinter

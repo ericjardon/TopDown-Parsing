@@ -1,14 +1,13 @@
-"""A Class-based module that can print a horizontal tree to console
- given a Node object that represents the root."""
-
 from TopdownParser import Node
 
 class TreePrinter:
-    "Characters for horiztonal tree formatting"
+    """Class that prints a horizontal tree to console given a
+    Node object that represents the root."""
     mid = "├──"
     last = "└──"
     branch = "│"
     tree = ""
+    # Characters for horizontal tree formatting
 
     # Helper method that recursively builds the string representing a Tree
     def printNodes(self, space, character, node, isLast):
