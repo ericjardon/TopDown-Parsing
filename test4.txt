@@ -7,4 +7,4 @@ A->a
 B->BA
 B->bbA
 B->aS
-b->b
+B->b

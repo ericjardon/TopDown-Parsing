@@ -19,14 +19,14 @@ def main():
         else:
             print(word, "is rejected")
 
-        user = int(input("Type 1 to try another file, \n2 to view the derivations tree,\n 0 to exit,\n"
-                         "any other number to try another word"))
+        user = int(input("Press:\n1 -- to try another file, \n2 -- to view the Derivations Tree,\n0 -- to exit,\n"
+                         "any other -- to try another word: "))
 
         if (user == 2):
-            print(tree)
+            # print(tree)
             print('=====================')
             TreePrinter().printTree(tree)
-
+            print('=====================')
 
     print("Bye!")
 

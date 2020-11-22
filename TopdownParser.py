@@ -1,20 +1,33 @@
-"""Parsing tree's search is deterministic i.e. a single path only"""
+"""Principal module that contains the classes for the Parsing process.
+    Node is a utility class representing the nodes for the derivations tree.
+    Node holds attributes for name (value), children nodes list, height, and parent node.
+    Parser is the class that traverses an implicit tree to generate a given word from a Grammar."""
+
 from collections import deque
 
 class Node:
     def __init__(self, name, parent):
+        # Leading underscore denotes internal use variables in OOP Python
         self._name=name
-        # children es una variable para uso interno ('privada')
-        self._children = [] # array of nodes
-        self._depth = 0
+        self._children = []
+        self._height = 0
         self._parent = parent
 
     def updateDepth(self, childDepth):
-        self._depth = max(self._depth, childDepth + 1)
+        """Depth of tree is our parameter to stop parsing.
+        Height of root is equal to depth of deepest node.
+        To know when to stop parsing, we check the height of the root.
+        This method updates a tree's depth by updating heights recursively from last added node towards the root.
+          childDepth is the height value of the previously updated node in tree"""
+        self._height = max(self._height, childDepth + 1)
+        # If the node has a parent, update its height too
         if self._parent != None:
-            self._parent.updateDepth(self._depth)
+            self._parent.updateDepth(self._height)
 
+    # Method to add a child to this node while also updating the depth of the tree
     def addChild(self, node):
+        """node is another instance of Node that is attached as child to this Node.
+            We append the child to children list of node and update the depth of tree."""
         self._children.append(node)
         self.updateDepth(node.depth)
 
@@ -28,27 +41,33 @@ class Node:
 
     @property
     def depth(self):
-        return self._depth
+        return self._height
 
-    # str method to print trees (debugging purposes)
+    # str method to print trees (debugging purposes, no pretty format)
     def __str__(self, level=0):
         tree =  "\t"*level + repr(self.name) + "\n"
         for child in self.children:
             tree += child.__str__(level+1)
         return tree
 
+
 class Parser:
-    # Traverses an implicit derivations tree to determine if the given word can be derived.
     def topdown_parse(self, Grammar, word, max):
+        """Traverses an implicit derivations tree to determine if the given word can be derived.
+            Grammar is an instance of Grammar class
+            word is the string to derive from the grammar
+            max is the maximum number of levels in the tree
+            Returns a boolean found and the root of the generated tree."""
+
         root = Node(Grammar.S, None)
-        que = deque()       # deque uses append() and popleft()
-        que.append(root)
+        que = deque()
+        que.append(root)        # initialize a queue and enqueue the root
         found = False
         while (len(que)>0 and not found and root.depth <= max):
-            # Iteration basis is per-node from the queue
-            q = que.popleft()   #   q is the node to analyze
+            # Iterations are per-node q popped from the queue
+            q = que.popleft()   # q is the node to analyze
             done = False
-            #print("Current node: ", q.name)
+            # print("Current node: ", q.name)
 
             # Decompose q into 'uAv' where A is leftmost non terminal symbol
             leftmost = None
@@ -57,18 +76,17 @@ class Parser:
                     leftmost = q.name[i]
                     pos = i     # the position of A in uAv
                     break
-            #print("Leftmost variable:", leftmost)
 
             if leftmost == None:
-                done = True     # which means we reached a leaf, so we skip to next iteration
+                done = True     # No A means we reached a leaf; skip to next iteration
 
-            i = 0  # index of production rule of A
+            i = 0  # index of current production of head A
+
             while (not done and not found):
                 # Per production rule of leftmost A
                 if i >= len(Grammar.rules[leftmost]):
                     done = True     # Finished exploring all production rules of A
                 else:
-                    #print("Rule", leftmost," ->", Grammar.rules[leftmost][i])
                     j = i+1
                     u = q.name[:pos]    # The substring to the left of A (prefix)
                     #print("u =", u)
@@ -78,10 +96,8 @@ class Parser:
                     #print("v =", v)
                     uwv = u + w + v
                     #print("uwv: ", uwv)
-                    wv = w + v          # The suffix wv
 
                     hasNonTerminal = False
-                    #nextpos = len(u) -1     # index to find next nonTerminal symbol in wv
                     nextpos = pos
 
                     # after producing uvw check if terminal prefix matches a prefix in word, otherwise stop exploring
@@ -94,14 +110,13 @@ class Parser:
 
                     #print("terminal prefix:", uwv[:nextpos])
                     if hasNonTerminal and uwv[:nextpos] == word[:nextpos]:
-                        # si no tiene no-terminales y es un prefijo, es un nodo válido para el árbol
+                        # si se compone solo de terminales y es un prefijo, es un nodo válido para el árbol
                         #print("uwv has non terminal and is valid prefix. enqueuing uwv: ", uwv)
                         node = Node(uwv, q)
                         que.append(node)        # append to tree & updates depth of the tree
                         q.addChild(node)        # enqueue the node to continue BFS
 
                     if uwv == word:
-                        print(word, "was found")
                         q.addChild(Node(word, q))      # appends to tree while updating depth of the tree
                         found = True
                     i = j

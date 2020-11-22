@@ -5,8 +5,9 @@ class Grammar:
         self._V = V  # array of non terminal symbols
         self._terminal = terminal  # array of terminal symbols
         self._S = S  # a special member contained in V
-        self._rules = P  # production rules. A dictionary of variable:[substitutions]
+        self._rules = P  # production rules. A dictionary { variable:[substitutions,] }
 
+    # Use of property decorators to declare Getter methods
     @property
     def V(self):
         return self._V
